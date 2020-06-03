@@ -76,8 +76,8 @@ echo "$uName" > /etc/hostname
 printf "%s" "127.0.0.1\tlocalhost\n::1\t\tlocalhost\n127.0.1.1\t$uName.localdomain\t$uName" > /etc/hosts
 
 # Wifi
-pacman -S --noconfirm iwd
-systemctl enable iwd systemd-resolved
+pacman -S --noconfirm iwd dhcpcd
+systemctl enable iwd dhcpcd
 printf "[General]\nEnableNetworkConfiguration=true\n" > /etc/iwd/main.conf
 
 # Root pass

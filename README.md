@@ -10,7 +10,7 @@ curl -Lo install https://is.gd/salis_install && sh install
 
 ## How to connect wifi after reboot?
 ```bash
-curl -Lo connect https://is.gd/salis_wifi && sh connect
+curl -Lo connect https://is.gd/salis_wifi && sudo sh connect
 ```
 
 ## What if I'm not living in Bangladesh?
