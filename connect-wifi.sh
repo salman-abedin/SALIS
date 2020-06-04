@@ -19,4 +19,3 @@ while :; do
 done
 
 iwctl --passphrase "$PASS" station "$CARD" connect "$SSID"
-# iwctl station "$CARD" scan && iwctl --passphrase "$PASS" station "$CARD" connect "$SSID"

@@ -78,7 +78,6 @@ printf "%s" "127.0.0.1\tlocalhost\n::1\t\tlocalhost\n127.0.1.1\t$uName.localdoma
 # Wifi
 pacman -S --noconfirm iwd dhcpcd
 systemctl enable iwd dhcpcd
-printf "[General]\nEnableNetworkConfiguration=true\n" > /etc/iwd/main.conf
 
 # Root pass
 printf "%s" "$rPass\n$rPass\n" | passwd
