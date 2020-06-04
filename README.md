@@ -19,3 +19,6 @@ curl -Lo connect https://is.gd/salis_wifi && sudo sh connect
 * Note down the **mirror url**
 * Enter the url when the installer asks for it
 * Change your respective **time zone** after reboot
+
+## My additions
+New add
