@@ -21,3 +21,4 @@ curl -Lo connect https://is.gd/salis_wifi && sudo sh connect
 * Change your respective **time zone** after reboot
 
 ## My additions
+New add
