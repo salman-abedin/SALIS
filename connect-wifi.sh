@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/sh
 
 CARD="$(ip link | grep -o 'w.*:' | tr -d ':')"
 
@@ -7,14 +7,14 @@ iwctl station "$CARD" get-networks
 while :; do
    echo "SSID?: "
    read -r SSID
-   [ "$SSID" ] && break
+   [ -n "$SSID" ] && break
    echo 'This script doesnt work for retards'
 done
 
 while :; do
    echo "PASS?: "
    read -r PASS
-   [ "$PASS" ] && break
+   [ -n "$PASS" ] && break
    echo 'This script doesnt work for retards'
 done
 
