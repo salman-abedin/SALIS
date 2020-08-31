@@ -1,10 +1,10 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 #Update the system clock
 timedatectl set-ntp true
 
 ################################################################################
-#                             User Info 
+#                             User Info
 ################################################################################
 
 while :; do
@@ -22,7 +22,7 @@ done
 read -pr "Server Address? (Press 'Enter' If you live in Bangladesh): " server
 
 ################################################################################
-#                             Partioning & Mounting 
+#                             Partioning & Mounting
 ################################################################################
 
 lsblk
@@ -55,7 +55,7 @@ echo "Server = $server" > /etc/pacman.d/mirrorlist
 pacstrap /mnt --noconfirm base linux-firmwar
 
 ################################################################################
-#                             Configuration 
+#                             Configuration
 ################################################################################
 
 genfstab -U /mnt > /mnt/etc/fstab
