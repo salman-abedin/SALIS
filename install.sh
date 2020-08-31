@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/bin/sh
+
+# server=
 
 #Update the system clock
 timedatectl set-ntp true
@@ -7,19 +9,11 @@ timedatectl set-ntp true
 #                             User Info
 ################################################################################
 
-while :; do
-   read -pr "User Name?: " uName
-   [ "$uName" ] && break
-   echo 'This script doesnt work for bastards'
-done
+printf "%s" "User Name: "
+read -r uName
 
-while :; do
-   read -prs "Root Password?: " rPass
-   [ "$rPass" ] && break
-   echo 'This script doesnt work for retards'
-done
-
-read -pr "Server Address? (Press 'Enter' If you live in Bangladesh): " server
+printf "%s" "Root Password: "
+read -r rPass
 
 ################################################################################
 #                             Partioning & Mounting
@@ -27,32 +21,22 @@ read -pr "Server Address? (Press 'Enter' If you live in Bangladesh): " server
 
 lsblk
 
-while :; do
-   read -pr "Device Letter? (Be careful!): " device
-   [ "$device" ] && break
-   echo 'This script doesnt work for retards'
-done
+printf "%s" "Device Letter? (Be careful!): "
+read -r device
 
-while :; do
-   read -pr "Root Partition Digit? (Be careful!): " root
-   [ "$root" ] && break
-   echo 'This script doesnt work for retards'
-done
+printf "%s" "Root Partition Digit? (Be careful!): "
+read -r root
 
 root=/dev/sd$device$root
-
 yes | mkfs.ext4 "$root"
-
 mount "$root" /mnt
 
 ################################################################################
 #                             Base Packages & Firmware Installation
 ################################################################################
 
-[ "$server" ] || server='http://mirror.xeonbd.com/archlinux/$repo/os/$arch'
-echo "Server = $server" > /etc/pacman.d/mirrorlist
-
-pacstrap /mnt --noconfirm base linux-firmwar
+# echo "Server = $server" > /etc/pacman.d/mirrorlist
+basestrap /mnt --noconfirm base base-devel linux linux-firmware runit elogind-runit
 
 ################################################################################
 #                             Configuration
@@ -60,7 +44,7 @@ pacstrap /mnt --noconfirm base linux-firmwar
 
 genfstab -U /mnt > /mnt/etc/fstab
 
-cat <<- EOF1 | arch-chroot /mnt
+cat << EOF | artools-chroot /mnt
 
 # Time Zone
 ln -sf /usr/share/zoneinfo/Asia/Dhaka /etc/localtime
@@ -77,12 +61,13 @@ printf "%s" "127.0.0.1\tlocalhost\n::1\t\tlocalhost\n127.0.1.1\t$uName.localdoma
 
 # Wifi
 pacman -S --noconfirm iwd dhcpcd
-systemctl enable iwd dhcpcd
+ln -s /etc/runit/sv/iwd /etc/runit/runsvdir/default
+ln -s /etc/runit/sv/dhcpcd /etc/runit/runsvdir/default
 
 # Root pass
 printf "%s" "$rPass\n$rPass\n" | passwd
 
-EOF1
+EOF
 
 umount -R /mnt
 reboot
