@@ -1,7 +1,5 @@
 #!/bin/sh
 
-# server=
-
 #Update the system clock
 timedatectl set-ntp true
 
@@ -35,7 +33,6 @@ mount "$root" /mnt
 #                             Base Packages & Firmware Installation
 ################################################################################
 
-# echo "Server = $server" > /etc/pacman.d/mirrorlist
 basestrap /mnt --noconfirm base base-devel linux linux-firmware runit elogind-runit
 
 ################################################################################
