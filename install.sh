@@ -69,5 +69,5 @@ printf "%s" "$rPass\n$rPass\n" | passwd
 
 EOF
 
-umount -R /mnt
-reboot
+# umount -R /mnt
+# reboot
