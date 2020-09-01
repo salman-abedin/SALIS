@@ -57,9 +57,8 @@ echo "$uName" > /etc/hostname
 printf "%s" "127.0.0.1\tlocalhost\n::1\t\tlocalhost\n127.0.1.1\t$uName.localdomain\t$uName" > /etc/hosts
 
 # Wifi
-pacman -S --noconfirm iwd dhcpcd
-ln -s /etc/runit/sv/iwd /etc/runit/runsvdir/default
-ln -s /etc/runit/sv/dhcpcd /etc/runit/runsvdir/default
+pacman -S --noconfirm iwd iwd-runit dhcpcd connman
+ln -s /etc/runit/sv/iwd /etc/runit/sv/dhcpcd /etc/runit/sv/connman /etc/runit/runsvdir/default
 
 # Root pass
 printf "%s" "$rPass\n$rPass\n" | passwd
