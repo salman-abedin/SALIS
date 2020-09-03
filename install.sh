@@ -33,7 +33,7 @@ mount "$root" /mnt
 #                             Base Packages & Firmware Installation
 ################################################################################
 
-basestrap /mnt --noconfirm base base-devel linux linux-firmware runit elogind-runit
+basestrap /mnt --noconfirm base base-devel linux-zen linux-firmware runit elogind-runit
 
 ################################################################################
 #                             Configuration
