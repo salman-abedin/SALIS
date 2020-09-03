@@ -1,6 +1,6 @@
 #!/bin/sh
 
-CARD="$(ip link | grep -o 'w.*:' | tr -d ':')"
+CARD=$(awk -F: 'END {print $1}' /proc/net/wireless)
 
 iwctl station "$CARD" get-networks
 
