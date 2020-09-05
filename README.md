@@ -2,7 +2,7 @@
 
 ## What does it do?
 
-This is a bash script that automates the installation of **arch linux(base packages and linux firmwares)** on a given partition.
+This is a shellscript that automates the installation of **Arch Linux(base packages and linux firmwares)** on a given partition.
 
 ## Usage
 
