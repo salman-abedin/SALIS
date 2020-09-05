@@ -1,4 +1,6 @@
 #!/bin/sh
+#
+# Arch linux installer script
 
 #Update the system clock
 timedatectl set-ntp true
@@ -46,7 +48,7 @@ pacstrap /mnt --noconfirm base base-devel linux-zen linux-firmware
 
 genfstab -U /mnt > /mnt/etc/fstab
 
-cat << eof | artools-chroot /mnt
+cat << eof | arch-chroot /mnt
 
 # Time Zone
 ln -sf /usr/share/zoneinfo/Asia/Dhaka /etc/localtime
