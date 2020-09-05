@@ -1,7 +1,5 @@
 #!/bin/sh
 
-# server=
-
 #Update the system clock
 timedatectl set-ntp true
 
@@ -35,16 +33,15 @@ mount "$root" /mnt
 #                             Base Packages & Firmware Installation
 ################################################################################
 
-# echo "Server = $server" > /etc/pacman.d/mirrorlist
-basestrap /mnt --noconfirm base base-devel linux linux-firmware runit elogind-runit
+basestrap /mnt --noconfirm base base-devel linux-zen linux-firmware runit elogind-runit
 
 ################################################################################
 #                             Configuration
 ################################################################################
 
-genfstab -U /mnt > /mnt/etc/fstab
+fstabgen -U /mnt > /mnt/etc/fstab
 
-cat << EOF | artools-chroot /mnt
+cat << eof | artools-chroot /mnt
 
 # Time Zone
 ln -sf /usr/share/zoneinfo/Asia/Dhaka /etc/localtime
@@ -60,14 +57,14 @@ echo "$uName" > /etc/hostname
 printf "%s" "127.0.0.1\tlocalhost\n::1\t\tlocalhost\n127.0.1.1\t$uName.localdomain\t$uName" > /etc/hosts
 
 # Wifi
-pacman -S --noconfirm iwd dhcpcd
+pacman -S --noconfirm iwd iwd-runit dhcpcd
 ln -s /etc/runit/sv/iwd /etc/runit/runsvdir/default
 ln -s /etc/runit/sv/dhcpcd /etc/runit/runsvdir/default
 
 # Root pass
 printf "%s" "$rPass\n$rPass\n" | passwd
 
-EOF
+eof
 
-umount -R /mnt
-reboot
+# umount -R /mnt
+# reboot
