@@ -1,21 +1,13 @@
 #!/bin/sh
 
-CARD=$(awk -F: 'END {print $1}' /proc/net/wireless)
+CARD=$(awk -F: 'END { gsub(/ /, "", $1); print $1}' /proc/net/wireless)
 
 iwctl station "$CARD" get-networks
 
-while :; do
-   echo "SSID?: "
-   read -r SSID
-   [ -n "$SSID" ] && break
-   echo 'This script doesnt work for retards'
-done
+echo "SSID?: "
+read -r SSID
 
-while :; do
-   echo "PASS?: "
-   read -r PASS
-   [ -n "$PASS" ] && break
-   echo 'This script doesnt work for retards'
-done
+echo "PASS?: "
+read -r PASS
 
 iwctl --passphrase "$PASS" station "$CARD" connect "$SSID"

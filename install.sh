@@ -7,11 +7,14 @@ timedatectl set-ntp true
 #                             User Info
 ################################################################################
 
-printf "%s" "User Name: "
+printf "User Name: "
 read -r uName
 
-printf "%s" "Root Password: "
+printf "Root Password: "
 read -r rPass
+
+printf "Server Address? (Press 'Enter' If you live in Bangladesh): "
+read -r SERVER
 
 ################################################################################
 #                             Partioning & Mounting
@@ -19,10 +22,10 @@ read -r rPass
 
 lsblk
 
-printf "%s" "Device Letter? (Be careful!): "
+printf "Device Letter? (Be careful!): "
 read -r device
 
-printf "%s" "Root Partition Digit? (Be careful!): "
+printf "Root Partition Digit? (Be careful!): "
 read -r root
 
 root=/dev/sd$device$root
@@ -33,7 +36,9 @@ mount "$root" /mnt
 #                             Base Packages & Firmware Installation
 ################################################################################
 
-basestrap /mnt --noconfirm base base-devel linux-zen linux-firmware runit elogind-runit
+echo "Server = ${SERVER:-http://mirror.xeonbd.com/archlinux/\$repo/os/\$arch}" \
+   > /etc/pacman.d/mirrorlist
+pacstrap /mnt --noconfirm base base-devel linux-zen linux-firmware
 
 ################################################################################
 #                             Configuration
@@ -41,7 +46,7 @@ basestrap /mnt --noconfirm base base-devel linux-zen linux-firmware runit elogin
 
 genfstab -U /mnt > /mnt/etc/fstab
 
-cat << EOF | artools-chroot /mnt
+cat << eof | artools-chroot /mnt
 
 # Time Zone
 ln -sf /usr/share/zoneinfo/Asia/Dhaka /etc/localtime
@@ -57,13 +62,13 @@ echo "$uName" > /etc/hostname
 printf "%s" "127.0.0.1\tlocalhost\n::1\t\tlocalhost\n127.0.1.1\t$uName.localdomain\t$uName" > /etc/hosts
 
 # Wifi
-pacman -S --noconfirm iwd iwd-runit dhcpcd connman
-ln -s /etc/runit/sv/iwd /etc/runit/sv/dhcpcd /etc/runit/sv/connman /etc/runit/runsvdir/default
+pacman -S --noconfirm iwd dhcpcd
+systemctl enable iwd dhcpcd
 
 # Root pass
 printf "%s" "$rPass\n$rPass\n" | passwd
 
-EOF
+eof
 
-# umount -R /mnt
-# reboot
+umount -R /mnt
+reboot
