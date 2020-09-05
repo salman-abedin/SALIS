@@ -6,14 +6,14 @@ This is a bash script that automates the installation of **arch linux(base packa
 
 ## Usage
 
-```bash
-curl -Lo install https://is.gd/salis_install && sh install
+```sh
+sh -c "$(curl -L https://is.gd/salis_install)"
 ```
 
 ## Wifi (after reboot)
 
-```bash
-curl -Lo connect https://is.gd/salis_wifi && sh connect
+```sh
+sh -c "$(curl -L https://is.gd/salis_wifi)"
 ```
 
 ## How to change the default Bangladeshi server
