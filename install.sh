@@ -41,21 +41,23 @@ printf "Boot partition digit? (i.e. sda<DIGIT>): "
 read -r boot
 printf "Root partition digit? (i.e. sda<DIGIT>): "
 read -r root
-printf "Internal partition digit? (i.e. sda<DIGIT>): "
-read -r internal
 
-: | mkfs.ext4 /dev/sd"$device$boot"
+if [ -d /sys/firmware/efi ]; then
+   : | mkfs.fat -F32 /dev/sd"$device$boot"
+   mkdir -p /mnt/boot/efi && mount /dev/sd"$device$boot" /mnt/boot/efi
+else
+   : | mkfs.ext4 /dev/sd"$device$boot"
+   mkdir /mnt/boot && mount /dev/sd"$device$boot" /mnt/boot
+fi
 : | mkfs.ext4 /dev/sd"$device$root"
 
-mkdir /mnt/boot && mount /dev/sd"$device$boot" /mnt/boot
 mount /dev/sd"$device$root" /mnt
-mkdir -p /mnt/mnt/internal && mount /dev/sd"$device$internal" /mnt/mnt/internal
 
 #===============================================================================
 #                     Base Packages & Firmware Installation
 #===============================================================================
 
-PACKAGES="base base-devel linux-zen linux-firmware neovim"
+PACKAGES="base base-devel linux-zen linux-firmware neovim git"
 INIT_SYSTEM="runit elogind-runit"
 
 if [ "$distro" = A ]; then
@@ -131,12 +133,15 @@ exec /usr/bin/rfkill unblock all 2>&1
 eof1
    chmod +x /etc/runit/sv/rfkill/run
    ln -s /etc/runit/sv/rfkill /etc/runit/runsvdir/default
+else
+   systemctl enable rfkill-unblock@all
 fi
 
 #---------------------------------------
 # Bootloader
 #---------------------------------------
 pacman -S --noconfirm grub os-prober intel-ucode
+[ -d /sys/firmware/efi ] && pacman -S --noconfirm efibootmgr
 grub-install /dev/sd$device
 sed -i \
    -e "s/.*GRUB_TIMEOUT=.*/GRUB_TIMEOUT=1/" \
