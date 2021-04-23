@@ -44,12 +44,15 @@ printf "Root partition digit? (i.e. sda<DIGIT>): "
 read -r root
 
 if [ -d /sys/firmware/efi ]; then
-  : | mkfs.fat -F32 /dev/sd"$device$boot"
-  mkdir -p /mnt/boot/efi && mount /dev/sd"$device$boot" /mnt/boot/efi
+  # : | mkfs.fat -F32 /dev/sd"$device$boot"
+  mkdir -p /mnt/boot/efi
+  mount /dev/sd"$device$boot" /mnt/boot/efi
 else
-  : | mkfs.ext4 /dev/sd"$device$boot"
-  mkdir /mnt/boot && mount /dev/sd"$device$boot" /mnt/boot
+  # : | mkfs.ext4 /dev/sd"$device$boot"
+  mkdir /mnt/boot
+  mount /dev/sd"$device$boot" /mnt/boot
 fi
+
 : | mkfs.ext4 /dev/sd"$device$root"
 
 mount /dev/sd"$device$root" /mnt
