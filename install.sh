@@ -71,16 +71,16 @@ esac
 #===============================================================================
 
 case "$DISTRO" in
-  *Arch*) genfstab -U /mnt > /mnt/etc/fstab ;;
-  *) fstabgen -U /mnt > /mnt/etc/fstab ;;
+  *Arch*) FSTAB_GEN_CMD=genfstab ;;
+  *) FSTAB_GEN_CMD=fstabgen ;;
 esac
+$FSTAB_GEN_CMD -U /mnt > /mnt/etc/fstab
 
 case "$DISTRO" in
-  *Arch*) CHROOT=arch ;;
-  *) CHROOT=artix ;;
+  *Arch*) CHROOT_CMD_PREFIX=arch ;;
+  *) CHROOT_CMD_PREFIX=artix ;;
 esac
-
-cat << eof | $CHROOT-chroot /mnt
+cat << eof | $CHROOT_CMD_PREFIX-chroot /mnt
 
 #---------------------------------------
 # Time Zone
