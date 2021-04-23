@@ -11,9 +11,6 @@ read -r DISTRO < /etc/os-release
 #                             User Info
 #===============================================================================
 
-printf "User Name: "
-read -r name_user
-
 printf "Root Password: "
 read -r password_root
 
@@ -61,12 +58,12 @@ mount /dev/sd"$device$root" /mnt
 #                     Base Packages & Firmware Installation
 #===============================================================================
 
-PACKAGES="base base-devel linux-zen linux-firmware neovim git"
+PACKAGES="base base-devel linux linux-firmware neovim git"
 INIT_SYSTEM="runit elogind-runit"
 
 case "$DISTRO" in
-  *Arch*) pacstrap /mnt --noconfirm $PACKAGES ;;
-  *) basestrap /mnt --noconfirm $PACKAGES $INIT_SYSTEM ;;
+  *Arch*) pacstrap /mnt --noconfirm --needed $PACKAGES ;;
+  *) basestrap /mnt --noconfirm --needed $PACKAGES $INIT_SYSTEM ;;
 esac
 
 #===============================================================================
@@ -115,16 +112,23 @@ eof1
 printf "$password_root\n$password_root\n" | passwd
 
 #---------------------------------------
+# Fstab
+#---------------------------------------
+case "$DISTRO" in
+  *Arch*) pacman -S --noconfirm --needed arch-install-scripts ;;
+  *) pacman -S --noconfirm --needed artools-base ;;
+esac
+
+#---------------------------------------
 # Wifi tools
 #---------------------------------------
 case "$DISTRO" in
   *Arch*)
-
-   pacman -S --noconfirm iwd dhcpcd
+   pacman -S --noconfirm --needed iwd dhcpcd
    systemctl enable iwd dhcpcd
     ;;
   *)
-   pacman -S --noconfirm iwd-runit dhcpcd-runit
+   pacman -S --noconfirm --needed iwd-runit dhcpcd-runit
    ln -s /etc/runit/sv/iwd /etc/runit/sv/dhcpcd /etc/runit/runsvdir/default
     ;;
 esac
@@ -151,8 +155,8 @@ esac
 #---------------------------------------
 # Bootloader
 #---------------------------------------
-pacman -S --noconfirm grub os-prober intel-ucode
-[ -d /sys/firmware/efi ] && pacman -S --noconfirm efibootmgr
+pacman -S --noconfirm --needed grub os-prober intel-ucode
+[ -d /sys/firmware/efi ] && pacman -S --noconfirm --needed efibootmgr
 grub-install /dev/sd$device
 sed -i \
    -e "s/.*GRUB_TIMEOUT=.*/GRUB_TIMEOUT=1/" \
