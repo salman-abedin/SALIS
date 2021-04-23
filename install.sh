@@ -5,12 +5,11 @@
 #Update the system clock
 timedatectl set-ntp true
 
+read -r DISTRO < /etc/os-release
+
 #===============================================================================
 #                             User Info
 #===============================================================================
-
-printf "Distro = { (a)rch, (A)rtix }:  "
-read -r distro
 
 printf "User Name: "
 read -r name_user
@@ -21,12 +20,14 @@ read -r password_root
 printf "Machine name: "
 read -r name_machine
 
-if [ "$distro" = a ]; then
-   printf "Living in Bangladesh? = { (y)es, (n)o }:  "
-   read -r locale_bangladesh
-   [ "$locale_bangladesh" = y ] &&
-      reflector --country Bangladesh --save /etc/pacman.d/mirrorlist
-fi
+case "$DISTRO" in
+  *Arch*)
+    printf "Living in Bangladesh? = { (y)es, (n)o }:  "
+    read -r locale_bangladesh
+    [ "$locale_bangladesh" = y ] \
+      && reflector --country Bangladesh --save /etc/pacman.d/mirrorlist
+    ;;
+esac
 
 #===============================================================================
 #                             Partitioning & Mounting
@@ -43,11 +44,11 @@ printf "Root partition digit? (i.e. sda<DIGIT>): "
 read -r root
 
 if [ -d /sys/firmware/efi ]; then
-   : | mkfs.fat -F32 /dev/sd"$device$boot"
-   mkdir -p /mnt/boot/efi && mount /dev/sd"$device$boot" /mnt/boot/efi
+  : | mkfs.fat -F32 /dev/sd"$device$boot"
+  mkdir -p /mnt/boot/efi && mount /dev/sd"$device$boot" /mnt/boot/efi
 else
-   : | mkfs.ext4 /dev/sd"$device$boot"
-   mkdir /mnt/boot && mount /dev/sd"$device$boot" /mnt/boot
+  : | mkfs.ext4 /dev/sd"$device$boot"
+  mkdir /mnt/boot && mount /dev/sd"$device$boot" /mnt/boot
 fi
 : | mkfs.ext4 /dev/sd"$device$root"
 
@@ -60,27 +61,24 @@ mount /dev/sd"$device$root" /mnt
 PACKAGES="base base-devel linux-zen linux-firmware neovim git"
 INIT_SYSTEM="runit elogind-runit"
 
-if [ "$distro" = A ]; then
-   basestrap /mnt --noconfirm $PACKAGES $INIT_SYSTEM
-else
-   pacstrap /mnt --noconfirm $PACKAGES
-fi
+case "$DISTRO" in
+  *Arch*) pacstrap /mnt --noconfirm $PACKAGES ;;
+  *) basestrap /mnt --noconfirm $PACKAGES $INIT_SYSTEM ;;
+esac
 
 #===============================================================================
 #                             Essential Configurations
 #===============================================================================
 
-if [ "$distro" = A ]; then
-   fstabgen -U /mnt > /mnt/etc/fstab
-else
-   genfstab -U /mnt > /mnt/etc/fstab
-fi
+case "$DISTRO" in
+  *Arch*) genfstab -U /mnt > /mnt/etc/fstab ;;
+  *) fstabgen -U /mnt > /mnt/etc/fstab ;;
+esac
 
-if [ "$distro" = A ]; then
-   CHROOT=artool
-else
-   CHROOT=arch
-fi
+case "$DISTRO" in
+  *Arch*) CHROOT=arch ;;
+  *) CHROOT=artix ;;
+esac
 
 cat << eof | $CHROOT-chroot /mnt
 
@@ -116,16 +114,27 @@ printf "$password_root\n$password_root\n" | passwd
 #---------------------------------------
 # Wifi tools
 #---------------------------------------
-if [ "$distro" = A ]; then
-   pacman -S --noconfirm iwd-runit dhcpcd-runit
-   ln -s /etc/runit/sv/iwd /etc/runit/sv/dhcpcd /etc/runit/runsvdir/default
-else
+case "$DISTRO" in
+  *Arch*)
+
    pacman -S --noconfirm iwd dhcpcd
    systemctl enable iwd dhcpcd
-fi
+    ;;
+  *)
+   pacman -S --noconfirm iwd-runit dhcpcd-runit
+   ln -s /etc/runit/sv/iwd /etc/runit/sv/dhcpcd /etc/runit/runsvdir/default
+    ;;
+esac
 
-if [ "$distro" = A ]; then
-   # rfkill
+
+#---------------------------------------
+# Rfkill
+#---------------------------------------
+case "$DISTRO" in
+  *Arch*)
+    systemctl enable rfkill-unblock@all
+    ;;
+  *)
    mkdir /etc/runit/sv/rfkill
 cat << eof1 | tee /etc/runit/sv/rfkill/run
 #!/bin/sh
@@ -133,9 +142,8 @@ exec /usr/bin/rfkill unblock all 2>&1
 eof1
    chmod +x /etc/runit/sv/rfkill/run
    ln -s /etc/runit/sv/rfkill /etc/runit/runsvdir/default
-else
-   systemctl enable rfkill-unblock@all
-fi
+    ;;
+esac
 
 #---------------------------------------
 # Bootloader
