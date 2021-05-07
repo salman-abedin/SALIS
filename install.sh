@@ -32,33 +32,33 @@ esac
 
 lsblk
 
-printf "Device Letter? (i.e. sd<LETTER>): "
+printf "Device Id? (i.e. sda): "
 read -r device
 
-printf "Boot partition digit? (i.e. sda<DIGIT>): "
+printf "Boot Partition ID? (i.e. sda\"1\"): "
 read -r boot
-printf "Root partition digit? (i.e. sda<DIGIT>): "
+printf "Root Partition ID? (i.e. sda\"1\"): "
 read -r root
 
 if [ -d /sys/firmware/efi ]; then
-  # : | mkfs.fat -F32 /dev/sd"$device$boot"
+  : | mkfs.fat -F32 /dev/"$device$boot"
   mkdir -p /mnt/boot/efi
-  mount /dev/sd"$device$boot" /mnt/boot/efi
+  mount /dev/"$device$boot" /mnt/boot/efi
 else
-  # : | mkfs.ext4 /dev/sd"$device$boot"
+  : | mkfs.ext4 /dev/"$device$boot"
   mkdir /mnt/boot
-  mount /dev/sd"$device$boot" /mnt/boot
+  mount /dev/"$device$boot" /mnt/boot
 fi
 
-: | mkfs.ext4 /dev/sd"$device$root"
+: | mkfs.ext4 /dev/"$device$root"
 
-mount /dev/sd"$device$root" /mnt
+mount /dev/"$device$root" /mnt
 
 #===============================================================================
 #                     Base Packages & Firmware Installation
 #===============================================================================
 
-PACKAGES="base base-devel linux linux-firmware neovim git"
+PACKAGES="base base-devel linux linux-firmware vim git"
 INIT_SYSTEM="runit elogind-runit"
 
 case "$DISTRO" in
@@ -115,8 +115,8 @@ printf "$password_root\n$password_root\n" | passwd
 # Fstab
 #---------------------------------------
 case "$DISTRO" in
-  *Arch*) pacman -S --noconfirm --needed arch-install-scripts ;;
-  *) pacman -S --noconfirm --needed artools-base ;;
+  *Arch*) pacman -Syy --noconfirm --needed arch-install-scripts ;;
+  *) pacman -Syy --noconfirm --needed artools-base ;;
 esac
 
 #---------------------------------------
@@ -124,11 +124,11 @@ esac
 #---------------------------------------
 case "$DISTRO" in
   *Arch*)
-   pacman -S --noconfirm --needed iwd dhcpcd
+   pacman -Syy --noconfirm --needed iwd dhcpcd
    systemctl enable iwd dhcpcd
     ;;
   *)
-   pacman -S --noconfirm --needed iwd-runit dhcpcd-runit
+   pacman -Syy --noconfirm --needed iwd-runit dhcpcd-runit
    ln -s /etc/runit/sv/iwd /etc/runit/sv/dhcpcd /etc/runit/runsvdir/default
     ;;
 esac
@@ -155,8 +155,8 @@ esac
 #---------------------------------------
 # Bootloader
 #---------------------------------------
-pacman -S --noconfirm --needed grub os-prober intel-ucode
-[ -d /sys/firmware/efi ] && pacman -S --noconfirm --needed efibootmgr
+pacman -Syy --noconfirm --needed grub os-prober intel-ucode
+[ -d /sys/firmware/efi ] && pacman -Syy --noconfirm --needed efibootmgr
 grub-install /dev/sd$device
 sed -i \
    -e "s/.*GRUB_TIMEOUT=.*/GRUB_TIMEOUT=1/" \
