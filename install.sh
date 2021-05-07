@@ -30,29 +30,29 @@ esac
 #                             Partitioning & Mounting
 #===============================================================================
 
-lsblk
-
-printf "Device Id? (i.e. sda): "
-read -r device
-
-printf "Boot Partition ID? (i.e. sda\"1\"): "
-read -r boot
-printf "Root Partition ID? (i.e. sda\"1\"): "
-read -r root
-
-if [ -d /sys/firmware/efi ]; then
-  : | mkfs.fat -F32 /dev/"$device$boot"
-  mkdir -p /mnt/boot/efi
-  mount /dev/"$device$boot" /mnt/boot/efi
-else
-  : | mkfs.ext4 /dev/"$device$boot"
-  mkdir /mnt/boot
-  mount /dev/"$device$boot" /mnt/boot
-fi
-
-: | mkfs.ext4 /dev/"$device$root"
-
-mount /dev/"$device$root" /mnt
+# lsblk
+# 
+# printf "Device Id? (i.e. sda): "
+# read -r device
+# 
+# printf "Boot Partition ID? (i.e. sda\"1\"): "
+# read -r boot
+# printf "Root Partition ID? (i.e. sda\"1\"): "
+# read -r root
+# 
+# if [ -d /sys/firmware/efi ]; then
+#   : | mkfs.fat -F32 /dev/"$device$boot"
+#   mkdir -p /mnt/boot/efi
+#   mount /dev/"$device$boot" /mnt/boot/efi
+# else
+#   : | mkfs.ext4 /dev/"$device$boot"
+#   mkdir /mnt/boot
+#   mount /dev/"$device$boot" /mnt/boot
+# fi
+# 
+# : | mkfs.ext4 /dev/"$device$root"
+# 
+# mount /dev/"$device$root" /mnt
 
 #===============================================================================
 #                     Base Packages & Firmware Installation
