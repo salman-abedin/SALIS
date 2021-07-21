@@ -5,7 +5,7 @@ SALIS is a shellscript that automates the installation of **Artix/Arch Linux(bas
 ## Usage
 
 ```sh
-sh -c "$(curl -L https://is.gd/salis_install)"
+sudo sh -c "$(curl -L https://is.gd/salis_install)"
 ```
 
 ## Wifi (after reboot)
