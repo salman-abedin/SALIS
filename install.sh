@@ -60,8 +60,8 @@ PACKAGES="base base-devel linux linux-firmware vim git"
 INIT_SYSTEM="runit elogind-runit"
 
 case "$DISTRO" in
-  *Arch*) pacstrap /mnt --noconfirm --needed $PACKAGES ;;
-  *) basestrap /mnt --noconfirm --needed $PACKAGES $INIT_SYSTEM ;;
+  *Arch*) pacstrap /mnt --noconfirm $PACKAGES arch-install-scripts ;;
+  *) basestrap /mnt --noconfirm $PACKAGES $INIT_SYSTEM artools-base artix-archlinux-support ;;
 esac
 
 #===============================================================================
@@ -110,23 +110,32 @@ eof1
 printf "$password_root\n$password_root\n" | passwd
 
 #---------------------------------------
-# Fstab
+# Repository Update
 #---------------------------------------
-case "$DISTRO" in
-  *Arch*) pacman -Syy --noconfirm --needed arch-install-scripts ;;
-  *) pacman -Syy --noconfirm --needed artools-base ;;
-esac
+
+cat << eof1 | tee -a /etc/pacman.conf
+[extra]
+Include = /etc/pacman.d/mirrorlist-arch
+
+[community]
+Include = /etc/pacman.d/mirrorlist-arch
+
+[multilib]
+Include = /etc/pacman.d/mirrorlist-arch
+eof1
+
+pacman -Syu
 
 #---------------------------------------
 # Wifi tools
 #---------------------------------------
 case "$DISTRO" in
   *Arch*)
-   pacman -Syy --noconfirm --needed iwd dhcpcd
+   pacman -S --noconfirm iwd dhcpcd
    systemctl enable iwd dhcpcd
     ;;
   *)
-   pacman -Syy --noconfirm --needed iwd-runit dhcpcd-runit
+   pacman -S --noconfirm iwd-runit dhcpcd-runit
    ln -s /etc/runit/sv/iwd /etc/runit/sv/dhcpcd /etc/runit/runsvdir/default
     ;;
 esac
@@ -152,8 +161,8 @@ esac
 #---------------------------------------
 # Bootloader
 #---------------------------------------
-pacman -Syy --noconfirm --needed grub os-prober intel-ucode
-[ -d /sys/firmware/efi ] && pacman -Syy --noconfirm --needed efibootmgr
+pacman -S --noconfirm grub os-prober intel-ucode
+[ -d /sys/firmware/efi ] && pacman -S --noconfirm efibootmgr
 grub-install /dev/sd$device
 sed -i \
    -e "s/.*GRUB_TIMEOUT=.*/GRUB_TIMEOUT=1/" \
