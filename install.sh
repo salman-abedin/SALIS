@@ -2,10 +2,12 @@
 #
 # Artix/Arch linux installer script
 
-#Update the system clock
-timedatectl set-ntp true
-
 read -r DISTRO < /etc/os-release
+
+#Update the system clock
+case "$DISTRO" in
+  *Arch*) timedatectl set-ntp true ;;
+esac
 
 #===============================================================================
 #                             User Info
@@ -181,12 +183,12 @@ grub-mkconfig -o /boot/grub/grub.cfg
 # Wifi script for post reboot connection
 #---------------------------------------
 cat << eof1 | tee /root/connect
-CARD=$(ip link | grep -o 'wl.\w*')
-for op in disconnect scan get-networks; do iwctl station "$CARD" "$op"; done
+CARD=\$(ip link | grep -o 'wl.\w*')
+for op in disconnect scan get-networks; do iwctl station "\$CARD" "\$op"; done
 echo "SSID?: "; read -r SSID
 echo "PASS?: "; read -r PASS
-iwctl --passphrase "$PASS" station "$CARD" connect "$SSID"
-iwctl station "$CARD" show
+iwctl --passphrase "\$PASS" station "\$CARD" connect "\$SSID"
+iwctl station "\$CARD" show
 eof1
 
 eof
