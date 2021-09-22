@@ -86,6 +86,15 @@ cat << eof | $CHROOT_CMD_PREFIX-chroot /mnt
 # Time Zone
 #---------------------------------------
 ln -sf /usr/share/zoneinfo/Asia/Dhaka /etc/localtime
+
+case "$DISTRO" in
+  *Arch*) : ;;
+  *)
+    pacman -Syy --noconfirm ntp
+    ntpd -qg
+    ;;
+esac
+
 hwclock --systohc
 
 #---------------------------------------
