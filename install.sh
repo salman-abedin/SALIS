@@ -38,7 +38,7 @@ printf "Device Id? (i.e. sda): "
 read -r device
 printf 'Boot Partition ID? (i.e. sda"1"): '
 read -r boot
-printf 'Root Partition ID? (i.e. sda"1"): '
+printf 'Root Partition ID? (i.e. sda"2"): '
 read -r root
 
 : | mkfs.ext4 /dev/"$device$root"
@@ -62,8 +62,8 @@ PACKAGES="base base-devel linux linux-firmware vim git"
 INIT_SYSTEM="runit elogind-runit"
 
 case "$DISTRO" in
-  *Arch*) pacstrap /mnt --noconfirm $PACKAGES arch-install-scripts ;;
-  *) basestrap /mnt --noconfirm $PACKAGES $INIT_SYSTEM artools-base artix-archlinux-support ;;
+  *Arch*) pacstrap /mnt --noconfirm $PACKAGES ;;
+  *) basestrap /mnt --noconfirm $PACKAGES $INIT_SYSTEM ;;
 esac
 
 #===============================================================================
@@ -127,6 +127,7 @@ printf "$password_root\n$password_root\n" | passwd
 case "$DISTRO" in
   *Arch*) : ;;
   *)
+   pacman -S --noconfirm artix-archlinux-support
     cat << eof1 | tee -a /etc/pacman.conf
 [extra]
 Include = /etc/pacman.d/mirrorlist-arch
@@ -137,9 +138,9 @@ Include = /etc/pacman.d/mirrorlist-arch
 [multilib]
 Include = /etc/pacman.d/mirrorlist-arch
 eof1
+    pacman-key --populate archlinux
     ;;
 esac
-
 
 pacman -Syu
 
