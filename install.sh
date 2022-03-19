@@ -6,7 +6,7 @@ read -r DISTRO < /etc/os-release
 
 #Update the system clock
 case "$DISTRO" in
-  *Arch*) timedatectl set-ntp true ;;
+    *Arch*) timedatectl set-ntp true ;;
 esac
 
 #===============================================================================
@@ -20,12 +20,12 @@ printf "Machine name: "
 read -r name_machine
 
 case "$DISTRO" in
-  *Arch*)
-    printf "Living in Bangladesh? = { (y)es, (n)o }:  "
-    read -r locale_bangladesh
-    [ "$locale_bangladesh" = y ] \
-      && reflector --country Bangladesh --save /etc/pacman.d/mirrorlist
-    ;;
+    *Arch*)
+        printf "Living in Bangladesh? = { (y)es, (n)o }:  "
+        read -r locale_bangladesh
+        [ "$locale_bangladesh" = y ] \
+            && reflector --country Bangladesh --save /etc/pacman.d/mirrorlist
+        ;;
 esac
 
 #===============================================================================
@@ -45,13 +45,13 @@ read -r root
 mount /dev/"$device$root" /mnt
 
 if [ -d /sys/firmware/efi ]; then
-  : | mkfs.fat -F32 /dev/"$device$boot"
-  mkdir -p /mnt/boot/efi
-  mount /dev/"$device$boot" /mnt/boot/efi
+    : | mkfs.fat -F32 /dev/"$device$boot"
+    mkdir -p /mnt/boot/efi
+    mount /dev/"$device$boot" /mnt/boot/efi
 else
-  : | mkfs.ext4 /dev/"$device$boot"
-  mkdir /mnt/boot
-  mount /dev/"$device$boot" /mnt/boot
+    : | mkfs.ext4 /dev/"$device$boot"
+    mkdir /mnt/boot
+    mount /dev/"$device$boot" /mnt/boot
 fi
 
 #===============================================================================
@@ -62,8 +62,8 @@ PACKAGES="base base-devel linux linux-firmware vim git"
 INIT_SYSTEM="runit elogind-runit"
 
 case "$DISTRO" in
-  *Arch*) pacstrap /mnt --noconfirm $PACKAGES ;;
-  *) basestrap /mnt --noconfirm $PACKAGES $INIT_SYSTEM ;;
+    *Arch*) pacstrap /mnt --noconfirm $PACKAGES ;;
+    *) basestrap /mnt --noconfirm $PACKAGES $INIT_SYSTEM ;;
 esac
 
 #===============================================================================
@@ -71,14 +71,14 @@ esac
 #===============================================================================
 
 case "$DISTRO" in
-  *Arch*) FSTAB_GEN_CMD=genfstab ;;
-  *) FSTAB_GEN_CMD=fstabgen ;;
+    *Arch*) FSTAB_GEN_CMD=genfstab ;;
+    *) FSTAB_GEN_CMD=fstabgen ;;
 esac
 $FSTAB_GEN_CMD -U /mnt > /mnt/etc/fstab
 
 case "$DISTRO" in
-  *Arch*) CHROOT_CMD_PREFIX=arch ;;
-  *) CHROOT_CMD_PREFIX=artix ;;
+    *Arch*) CHROOT_CMD_PREFIX=arch ;;
+    *) CHROOT_CMD_PREFIX=artix ;;
 esac
 cat << eof | $CHROOT_CMD_PREFIX-chroot /mnt
 
@@ -149,12 +149,16 @@ pacman -Syu
 #---------------------------------------
 case "$DISTRO" in
   *Arch*)
-   pacman -S --noconfirm iwd dhcpcd
-   systemctl enable iwd dhcpcd
+   pacman -S --noconfirm networkmanager
+   systemctl enable iwd NetworkManager
+   # pacman -S --noconfirm iwd dhcpcd
+   # systemctl enable iwd dhcpcd
     ;;
   *)
-   pacman -S --noconfirm iwd-runit dhcpcd-runit
-   ln -s /etc/runit/sv/iwd /etc/runit/sv/dhcpcd /etc/runit/runsvdir/default
+   pacman -S --noconfirm networkmanager-runit
+   ln -s /etc/runit/sv/NetworkManager /etc/runit/runsvdir/default
+   # pacman -S --noconfirm iwd-runit dhcpcd-runit
+   # ln -s /etc/runit/sv/iwd /etc/runit/sv/dhcpcd /etc/runit/runsvdir/default
     ;;
 esac
 
@@ -189,19 +193,23 @@ sed -i \
    /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
 
-#---------------------------------------
-# Wifi script for post reboot connection
-#---------------------------------------
-cat << eof1 | tee /root/connect
-CARD=\$(ip link | grep -o 'wl.\w*')
-for op in disconnect scan get-networks; do iwctl station "\$CARD" "\$op"; done
-echo "SSID?: "; read -r SSID
-echo "PASS?: "; read -r PASS
-iwctl --passphrase "\$PASS" station "\$CARD" connect "\$SSID"
-iwctl station "\$CARD" show
-eof1
-
 eof
 
 umount -R /mnt
 reboot
+
+# ╔══════════════════════════════════════════════════════════════════════
+# ║                              Exp
+# ╚══════════════════════════════════════════════════════════════════════
+
+# #---------------------------------------
+# # Wifi script for post reboot connection
+# #---------------------------------------
+# cat << eof1 | tee /root/connect
+# CARD=\$(ip link | grep -o 'wl.\w*')
+# for op in disconnect scan get-networks; do iwctl station "\$CARD" "\$op"; done
+# echo "SSID?: "; read -r SSID
+# echo "PASS?: "; read -r PASS
+# iwctl --passphrase "\$PASS" station "\$CARD" connect "\$SSID"
+# iwctl station "\$CARD" show
+# eof1
