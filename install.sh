@@ -2,30 +2,32 @@
 #
 # Artix/Arch linux installer script
 
-read -r DISTRO < /etc/os-release
+read -r DISTRO </etc/os-release
 
 #Update the system clock
 case "$DISTRO" in
-    *Arch*) timedatectl set-ntp true ;;
+*Arch*) timedatectl set-ntp true ;;
 esac
 
 #===============================================================================
 #                             User Info
 #===============================================================================
 
+stty -echo
 printf "Root Password: "
 read -r password_root
+stty echo
 
 printf "Machine name: "
 read -r name_machine
 
 case "$DISTRO" in
-    *Arch*)
-        printf "Living in Bangladesh? = { (y)es, (n)o }:  "
-        read -r locale_bangladesh
-        [ "$locale_bangladesh" = y ] \
-            && reflector --country Bangladesh --save /etc/pacman.d/mirrorlist
-        ;;
+*Arch*)
+    printf "Living in Bangladesh? = { (y)es, (n)o }:  "
+    read -r locale_bangladesh
+    [ "$locale_bangladesh" = y ] &&
+        reflector --country Bangladesh --save /etc/pacman.d/mirrorlist
+    ;;
 esac
 
 #===============================================================================
@@ -62,8 +64,8 @@ PACKAGES="base base-devel linux linux-firmware vim git"
 INIT_SYSTEM="runit elogind-runit"
 
 case "$DISTRO" in
-    *Arch*) pacstrap /mnt --noconfirm $PACKAGES ;;
-    *) basestrap /mnt --noconfirm $PACKAGES $INIT_SYSTEM ;;
+*Arch*) pacstrap /mnt --noconfirm $PACKAGES ;;
+*) basestrap /mnt --noconfirm $PACKAGES $INIT_SYSTEM ;;
 esac
 
 #===============================================================================
@@ -71,16 +73,16 @@ esac
 #===============================================================================
 
 case "$DISTRO" in
-    *Arch*) FSTAB_GEN_CMD=genfstab ;;
-    *) FSTAB_GEN_CMD=fstabgen ;;
+*Arch*) FSTAB_GEN_CMD=genfstab ;;
+*) FSTAB_GEN_CMD=fstabgen ;;
 esac
-$FSTAB_GEN_CMD -U /mnt > /mnt/etc/fstab
+$FSTAB_GEN_CMD -U /mnt >/mnt/etc/fstab
 
 case "$DISTRO" in
-    *Arch*) CHROOT_CMD_PREFIX=arch ;;
-    *) CHROOT_CMD_PREFIX=artix ;;
+*Arch*) CHROOT_CMD_PREFIX=arch ;;
+*) CHROOT_CMD_PREFIX=artix ;;
 esac
-cat << eof | $CHROOT_CMD_PREFIX-chroot /mnt
+cat <<eof | $CHROOT_CMD_PREFIX-chroot /mnt
 
 #---------------------------------------
 # Time Zone
