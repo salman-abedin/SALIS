@@ -43,9 +43,6 @@ read -r boot
 printf 'Root Partition ID? (i.e. sda"2"): '
 read -r root
 
-: | mkfs.ext4 /dev/"$device$root"
-mount /dev/"$device$root" /mnt
-
 if [ -d /sys/firmware/efi ]; then
     : | mkfs.fat -F32 /dev/"$device$boot"
     mkdir -p /mnt/boot/efi
@@ -56,11 +53,14 @@ else
     mount /dev/"$device$boot" /mnt/boot
 fi
 
+: | mkfs.ext4 /dev/"$device$root"
+mount /dev/"$device$root" /mnt
+
 #===============================================================================
 #                     Base Packages & Firmware Installation
 #===============================================================================
 
-PACKAGES="base base-devel linux linux-firmware vim git"
+PACKAGES="base base-devel linux-zen linux-firmware neovim git"
 INIT_SYSTEM="runit elogind-runit"
 
 case "$DISTRO" in
@@ -82,14 +82,14 @@ case "$DISTRO" in
 *Arch*) CHROOT_CMD_PREFIX=arch ;;
 *) CHROOT_CMD_PREFIX=artix ;;
 esac
-cat <<eof | $CHROOT_CMD_PREFIX-chroot /mnt
+cat <<EOF | $CHROOT_CMD_PREFIX-chroot /mnt
 
 #---------------------------------------
 # Time Zone
 #---------------------------------------
 ln -sf /usr/share/zoneinfo/Asia/Dhaka /etc/localtime
 
-case "$DISTRO" in
+case $DISTRO in
   *Arch*) : ;;
   *)
     pacman -Syy --noconfirm ntp
@@ -109,12 +109,11 @@ echo "LANG=en_US.UTF-8" > /etc/locale.conf
 #---------------------------------------
 # Network Setup
 #---------------------------------------
-echo "$name_machine" > /etc/hostname
+echo $name_machine > /etc/hostname
 cat << eof1 | tee /etc/hosts
 127.0.0.1 localhost
 ::1       localhost
 127.0.1.1 $name_machine.localdomain     $name_machine
-0.0.0.0   get.code-industry.net
 eof1
 
 #---------------------------------------
@@ -126,7 +125,7 @@ printf "$password_root\n$password_root\n" | passwd
 # Repository Update
 #---------------------------------------
 
-case "$DISTRO" in
+case $DISTRO in
   *Arch*) : ;;
   *)
    pacman -S --noconfirm artix-archlinux-support
@@ -149,25 +148,21 @@ pacman -Syu
 #---------------------------------------
 # Wifi tools
 #---------------------------------------
-case "$DISTRO" in
+case $DISTRO in
   *Arch*)
    pacman -S --noconfirm networkmanager
-   systemctl enable iwd NetworkManager
-   # pacman -S --noconfirm iwd dhcpcd
-   # systemctl enable iwd dhcpcd
+   systemctl enable NetworkManager
     ;;
   *)
    pacman -S --noconfirm networkmanager-runit
    ln -s /etc/runit/sv/NetworkManager /etc/runit/runsvdir/default
-   # pacman -S --noconfirm iwd-runit dhcpcd-runit
-   # ln -s /etc/runit/sv/iwd /etc/runit/sv/dhcpcd /etc/runit/runsvdir/default
     ;;
 esac
 
 #---------------------------------------
 # Rfkill
 #---------------------------------------
-case "$DISTRO" in
+case $DISTRO in
   *Arch*)
     systemctl enable rfkill-unblock@all
     ;;
@@ -195,7 +190,7 @@ sed -i \
    /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
 
-eof
+EOF
 
 umount -R /mnt
 reboot
@@ -215,3 +210,16 @@ reboot
 # iwctl --passphrase "\$PASS" station "\$CARD" connect "\$SSID"
 # iwctl station "\$CARD" show
 # eof1
+# #---------------------------------------
+# # Wifi tools
+# #---------------------------------------
+# case "$DISTRO" in
+#   *Arch*)
+#    pacman -S --noconfirm iwd dhcpcd
+#    systemctl enable iwd dhcpcd
+#     ;;
+#   *)
+#    pacman -S --noconfirm iwd-runit dhcpcd-runit
+#    ln -s /etc/runit/sv/iwd /etc/runit/sv/dhcpcd /etc/runit/runsvdir/default
+#     ;;
+# esac
