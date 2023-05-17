@@ -43,6 +43,9 @@ read -r boot
 printf 'Root Partition ID? (i.e. sda"2"): '
 read -r root
 
+: | mkfs.ext4 /dev/"$device$root"
+mount /dev/"$device$root" /mnt
+
 if [ -d /sys/firmware/efi ]; then
     : | mkfs.fat -F32 /dev/"$device$boot"
     mkdir -p /mnt/boot/efi
@@ -53,14 +56,11 @@ else
     mount /dev/"$device$boot" /mnt/boot
 fi
 
-: | mkfs.ext4 /dev/"$device$root"
-mount /dev/"$device$root" /mnt
-
 #===============================================================================
 #                     Base Packages & Firmware Installation
 #===============================================================================
 
-PACKAGES="base base-devel linux-zen linux-firmware neovim git"
+PACKAGES="base base-devel linux-lts linux-firmware neovim git"
 INIT_SYSTEM="runit elogind-runit"
 
 case "$DISTRO" in
@@ -83,21 +83,6 @@ case "$DISTRO" in
 *) CHROOT_CMD_PREFIX=artix ;;
 esac
 cat <<EOF | $CHROOT_CMD_PREFIX-chroot /mnt
-
-#---------------------------------------
-# Time Zone
-#---------------------------------------
-ln -sf /usr/share/zoneinfo/Asia/Dhaka /etc/localtime
-
-case $DISTRO in
-  *Arch*) : ;;
-  *)
-    pacman -Syy --noconfirm ntp
-    ntpd -qg
-    ;;
-esac
-
-hwclock --systohc
 
 #---------------------------------------
 # Localization
@@ -124,26 +109,50 @@ printf "$password_root\n$password_root\n" | passwd
 #---------------------------------------
 # Repository Update
 #---------------------------------------
-
 case $DISTRO in
   *Arch*) : ;;
   *)
-   pacman -S --noconfirm artix-archlinux-support
+
+    cat << eof1 | tee -a /etc/pacman.conf
+[universe]
+Server = https://universe.artixlinux.org/\$arch
+Server = https://mirror1.artixlinux.org/universe/\$arch
+Server = https://mirror.pascalpuffke.de/artix-universe/\$arch
+Server = https://mirrors.qontinuum.space/artixlinux-universe/\$arch
+Server = https://mirror1.cl.netactuate.com/artix/universe/\$arch
+Server = https://ftp.crifo.org/artix-universe/\$arch
+Server = https://artix.sakamoto.pl/universe/\$arch
+eof1
+
+    pacman -Syy --noconfirm artix-archlinux-support
+    pacman-key --populate archlinux
+
     cat << eof1 | tee -a /etc/pacman.conf
 [extra]
 Include = /etc/pacman.d/mirrorlist-arch
-
 [community]
 Include = /etc/pacman.d/mirrorlist-arch
-
 [multilib]
 Include = /etc/pacman.d/mirrorlist-arch
 eof1
-    pacman-key --populate archlinux
+
     ;;
 esac
 
 pacman -Syu
+
+#---------------------------------------
+# Time Zone
+#---------------------------------------
+ln -sf /usr/share/zoneinfo/Asia/Dhaka /etc/localtime
+case $DISTRO in
+  *Arch*) : ;;
+  *)
+    pacman -S --noconfirm ntp
+    ntpd -qg
+    ;;
+esac
+hwclock --systohc
 
 #---------------------------------------
 # Wifi tools
@@ -182,7 +191,7 @@ esac
 #---------------------------------------
 pacman -S --noconfirm grub os-prober intel-ucode
 [ -d /sys/firmware/efi ] && pacman -S --noconfirm efibootmgr
-grub-install /dev/sd$device
+grub-install /dev/$device
 sed -i \
    -e "s/.*GRUB_TIMEOUT=.*/GRUB_TIMEOUT=1/" \
    -e 's/.*GRUB_SAVE.*/GRUB_SAVEDEFAULT="true"/' \
