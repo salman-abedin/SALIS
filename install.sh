@@ -158,13 +158,13 @@ hwclock --systohc
 # Wifi tools
 #---------------------------------------
 case $DISTRO in
-  *Arch*)
-   pacman -S --noconfirm networkmanager
-   systemctl enable NetworkManager
+*Arch*)
+    pacman -S --noconfirm iwd dhcpcd
+    systemctl enable iwd dhcpcd
     ;;
-  *)
-   pacman -S --noconfirm networkmanager-runit
-   ln -s /etc/runit/sv/NetworkManager /etc/runit/runsvdir/default
+*)
+    pacman -S --noconfirm iwd-runit dhcpcd-runit
+    ln -s /etc/runit/sv/iwd /etc/runit/sv/dhcpcd /etc/runit/runsvdir/default
     ;;
 esac
 
@@ -219,16 +219,17 @@ reboot
 # iwctl --passphrase "\$PASS" station "\$CARD" connect "\$SSID"
 # iwctl station "\$CARD" show
 # eof1
+
 # #---------------------------------------
 # # Wifi tools
 # #---------------------------------------
-# case "$DISTRO" in
-#   *Arch*)
-#    pacman -S --noconfirm iwd dhcpcd
-#    systemctl enable iwd dhcpcd
+# case $DISTRO in
+# *Arch*)
+#     pacman -S --noconfirm networkmanager
+#     systemctl enable NetworkManager
 #     ;;
-#   *)
-#    pacman -S --noconfirm iwd-runit dhcpcd-runit
-#    ln -s /etc/runit/sv/iwd /etc/runit/sv/dhcpcd /etc/runit/runsvdir/default
+# *)
+#     pacman -S --noconfirm networkmanager-runit
+#     ln -s /etc/runit/sv/NetworkManager /etc/runit/runsvdir/default
 #     ;;
 # esac
