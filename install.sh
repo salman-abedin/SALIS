@@ -60,7 +60,7 @@ fi
 #                     Base Packages & Firmware Installation
 #===============================================================================
 
-PACKAGES="base base-devel linux-lts linux-firmware neovim git"
+PACKAGES="base base-devel linux-zen linux-firmware neovim npm git"
 INIT_SYSTEM="runit elogind-runit"
 
 case "$DISTRO" in
@@ -165,6 +165,20 @@ case $DISTRO in
 *)
     pacman -S --noconfirm iwd-runit dhcpcd-runit
     ln -s /etc/runit/sv/iwd /etc/runit/sv/dhcpcd /etc/runit/runsvdir/default
+    ;;
+esac
+
+#---------------------------------------
+# Firewall
+#---------------------------------------
+case $DISTRO in
+*Arch*)
+    pacman -S --noconfirm ufw
+    systemctl enable ufw
+    ;;
+*)
+    pacman -S --noconfirm ufw-runit
+    ln -s /etc/runit/sv/ufw /etc/runit/runsvdir/default
     ;;
 esac
 
