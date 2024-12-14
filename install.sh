@@ -2,6 +2,8 @@
 #
 # Artix/Arch linux installer script
 
+setfont -d
+
 read -r DISTRO </etc/os-release
 
 #Update the system clock
@@ -18,7 +20,7 @@ printf "Root Password: "
 read -r password_root
 stty echo
 
-printf "Machine name: "
+printf "\nMachine name: "
 read -r name_machine
 
 case "$DISTRO" in
@@ -36,36 +38,54 @@ esac
 
 lsblk
 
-printf "Device Id? (i.e. sda): "
+printf "\nDevice Id? (i.e. sda): "
 read -r device
+
 printf 'Boot Partition ID? (i.e. sda"1"): '
 read -r boot
-printf 'Root Partition ID? (i.e. sda"2"): '
-read -r root
+printf 'Root Partition Path? (i.e. vg1/root): '
+read -r path_root
+# printf 'Home Partition Path? (i.e. vg1/home): '
+# read -r path_home
+# printf 'Data Partition Path? (i.e. vg1/data): '
+# read -r path_data
 
-: | mkfs.ext4 /dev/"$device$root"
-mount /dev/"$device$root" /mnt
+# cryptsetup luksFormat /dev/"$device$root"
+# cryptsetup open /dev/"$device$root" cryptlvm
+# pvcreate /dev/mapper/cryptlvm
+# vgcreate vg1 /dev/mapper/cryptlvm
+# lvcreate -L 50G vg1 -n root
+# lvcreate -L 10G vg1 -n home
+# lvcreate -l 100%FREE vg1 -n data
 
-if [ -d /sys/firmware/efi ]; then
-    : | mkfs.fat -F32 /dev/"$device$boot"
-    mkdir -p /mnt/boot/efi
-    mount /dev/"$device$boot" /mnt/boot/efi
-else
-    : | mkfs.ext4 /dev/"$device$boot"
-    mkdir /mnt/boot
-    mount /dev/"$device$boot" /mnt/boot
-fi
+: | mkfs.ext4 /dev/"$path_root"
+mount /dev/"$path_root" /mnt
+
+: | mkfs.fat -F32 /dev/"$device$boot"
+mount --mkdir /dev/"$device$boot" /mnt/boot/efi
+
+# : | mkfs.ext4 /dev/"$path_home"
+# mount --mkdir /dev/"$path_home" /mnt/home
+#
+# : | mkfs.ext4 /dev/"$path_data"
+# mount --mkdir /dev/"$path_data" /mnt/data
+
+# Enable parallel downloads
+sed -i "s/#Parallel/Parallel/" /etc/pacman.conf
+
+# Use all cores for compilation.
+sed -i "s/-j2/-j$(nproc)/;s/^#MAKEFLAGS/MAKEFLAGS/" /etc/makepkg.conf
 
 #===============================================================================
 #                     Base Packages & Firmware Installation
 #===============================================================================
 
-PACKAGES="base base-devel linux-zen linux-firmware neovim npm git"
+PACKAGES="base base-devel linux-zen linux-firmware neovim npm git lvm2 openssh zsh starship zoxide go wireguard-tools"
 INIT_SYSTEM="runit elogind-runit"
 
 case "$DISTRO" in
 *Arch*) pacstrap /mnt --noconfirm $PACKAGES ;;
-*) basestrap /mnt --noconfirm $PACKAGES $INIT_SYSTEM ;;
+*) basestrap /mnt --noconfirm "$PACKAGES $INIT_SYSTEM" ;;
 esac
 
 #===============================================================================
@@ -146,7 +166,10 @@ pacman -Syu
 #---------------------------------------
 ln -sf /usr/share/zoneinfo/Asia/Dhaka /etc/localtime
 case $DISTRO in
-  *Arch*) : ;;
+  *Arch*)
+    pacman -S --noconfirm chrony
+    systemctl enable chronyd
+    ;;
   *)
     pacman -S --noconfirm ntp
     ntpd -qg
@@ -159,6 +182,8 @@ hwclock --systohc
 #---------------------------------------
 case $DISTRO in
 *Arch*)
+    # pacman -S --noconfirm networkmanager
+    # systemctl enable NetworkManager
     pacman -S --noconfirm iwd dhcpcd
     systemctl enable iwd dhcpcd
     ;;
@@ -200,12 +225,21 @@ eof1
     ;;
 esac
 
+# #---------------------------------------
+# # Encryption
+# #---------------------------------------
+# sed -i 's/^HOOKS.*block/& lvm2 encrypt/' /etc/mkinitcpio.conf
+# mkinitcpio -p linux-zen
+
 #---------------------------------------
 # Bootloader
 #---------------------------------------
-pacman -S --noconfirm grub os-prober intel-ucode
+# pacman -S --noconfirm grub os-prober intel-ucode
+pacman -S --noconfirm grub
 [ -d /sys/firmware/efi ] && pacman -S --noconfirm efibootmgr
-grub-install /dev/$device
+# sed -i 's/^#GRUB_ENABLE_CRYPT/GRUB_ENABLE_CRYPT/' /etc/default/grub
+grub-install --efi-directory=/boot/efi --target=x86_64-efi --bootloader-id=GRUB /dev/$device
+# cryptdevice=UUID=beb1a263-78f3-44e2-ac4c-ecabfb8ae2ae:cryptlvm root=/dev/vg1/root
 sed -i \
    -e "s/.*GRUB_TIMEOUT=.*/GRUB_TIMEOUT=1/" \
    -e 's/.*GRUB_SAVE.*/GRUB_SAVEDEFAULT="true"/' \
@@ -215,8 +249,8 @@ grub-mkconfig -o /boot/grub/grub.cfg
 
 EOF
 
-umount -R /mnt
-reboot
+# umount -R /mnt
+# reboot
 
 # ╔══════════════════════════════════════════════════════════════════════
 # ║                              Exp
